@@ -28,11 +28,48 @@ exec --no-startup-id dex --autostart --environment i3
 
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
-exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock-fancy --nofork
 
-# NetworkManager is the most popular way to manage wireless networks on Linux,
-# and nm-applet is a desktop environment-independent system tray GUI for it.
+# Setting resolution and start compositor
+exec --no-startup-id xrandr -s 1920x1080
+# exec --no-startup-id picom
+
+# Setting wallpaper
+exec --no-startup-id nitrogen --restore
+
+# Starting applets
 exec --no-startup-id nm-applet
+exec --no-startup-id volumeicon
+	#missing bluetooth
+
+# Removing window borders
+default_border pixel 1
+
+# Pop up settings
+popup_during_fullscreen smart
+
+# Assigning apps to specific workspaces
+assign [class="Firefox-esr"] 2
+
+# Setting gaps
+gaps inner 5
+gaps outer 2
+
+# Mouse changes window focus
+focus_follows_mouse yes
+
+# Window colors
+
+# class                 border  backgr. text    indicator child_border
+client.focused          #ff0000 #285577 #ffffff #ff0000   #ff0000
+client.focused_inactive #333333 #5f676a #ffffff #484e50   #5f676a
+client.unfocused        #333333 #222222 #888888 #292d2e   #222222
+client.urgent           #2f343a #900000 #ffffff #900000   #900000
+client.placeholder      #000000 #0c0c0c #ffffff #000000   #0c0c0c
+
+client.background       #ffffff
+
+
 
 # Use pactl to adjust volume in PulseAudio.
 set $refresh_i3status killall -SIGUSR1 i3status
@@ -44,25 +81,33 @@ bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOU
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
 
+# lock screen
+bindsym $mod+q exec i3lock-fancy
+
 # start a terminal
-bindsym $mod+Return exec i3-sensible-terminal
+bindsym $mod+Return exec alacritty
+
+# start web browser
+bindsym $mod+w exec firefox-esr
 
 # kill focused window
 bindsym $mod+Shift+q kill
 
 # start dmenu (a program launcher)
-bindsym $mod+d exec --no-startup-id rofi -show drun
+# bindsym $mod+d exec --no-startup-id dmenu_run
+
 # A more modern dmenu replacement is rofi:
 # bindcode $mod+40 exec "rofi -modi drun,run -show drun"
+
 # There also is i3-dmenu-desktop which only displays applications shipping a
 # .desktop file. It is a wrapper around dmenu, so you need that installed.
-# bindcode $mod+40 exec --no-startup-id i3-dmenu-desktop
+bindcode $mod+40 exec --no-startup-id j4-dmenu-desktop
 
 # change focus
 bindsym $mod+j focus left
 bindsym $mod+k focus down
 bindsym $mod+l focus up
-bindsym $mod+ccedilla focus right
+bindsym $mod+semicolon focus right
 
 # alternatively, you can use the cursor keys:
 bindsym $mod+Left focus left
@@ -74,7 +119,7 @@ bindsym $mod+Right focus right
 bindsym $mod+Shift+j move left
 bindsym $mod+Shift+k move down
 bindsym $mod+Shift+l move up
-bindsym $mod+Shift+ccedilla move right
+bindsym $mod+Shift+semicolon move right
 
 # alternatively, you can use the cursor keys:
 bindsym $mod+Shift+Left move left
@@ -163,7 +208,7 @@ mode "resize" {
         bindsym j resize shrink width 10 px or 10 ppt
         bindsym k resize grow height 10 px or 10 ppt
         bindsym l resize shrink height 10 px or 10 ppt
-        bindsym ccedilla resize grow width 10 px or 10 ppt
+        bindsym semicolon resize grow width 10 px or 10 ppt
 
         # same bindings, but for the arrow keys
         bindsym Left resize shrink width 10 px or 10 ppt
@@ -181,36 +226,37 @@ bindsym $mod+r mode "resize"
 
 # Start i3bar to display a workspace bar (plus the system information i3status
 # finds out, if available)
-#bar {
-#        status_command i3blocks -c ~/.config/i3/i3blocks.conf
-#	font pango: monospace 6	
-#}
+bar {
+        status_command i3status
+	
+	colors {
+        	background #000000
+        	statusline #ffffff
+	        separator  #ffffff
 
-	###ADDITIONAL CONFIGS###
+        	focused_workspace  #ff0000 #ff0000 #ffffff
+	        active_workspace   #333333 #333333 #ffffff
+        	inactive_workspace #333333 #333333 #ffffff
+	        urgent_workspace   #239923 #239923 #ffffff
+        	binding_mode       #2f343a #900000 #ffffff
+    	}
+}
 
-#BINDS#
 
-# i3-lock
-bindsym $mod+shift+x exec i3lock -i ~/Pictures/i3blur.png -f
+# Shutdown menu (requires polkit)
+set $Locker i3lock-fancy && sleep 1
 
-# Firefox
-bindsym $mod+w exec firefox
+set $mode_system (l) lock | (s) suspend | (r) reboot | (Shift+s) shutdown
+mode "$mode_system" {
+    bindsym l exec --no-startup-id $Locker, mode "default"
+    bindsym s exec --no-startup-id systemctl suspend && $Locker, mode "default"
+    bindsym r exec --no-startup-id systemctl reboot, mode "default"
+    bindsym Shift+s exec --no-startup-id systemctl poweroff -i, mode "default"  
 
-# File manager
-bindsym $mod+n exec nautilus
-# bindsym $mod+n exec Ranger
+    # back to normal: Enter or Escape
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
 
-# Setting border
-default_border pixel 2
+bindsym $mod+Escape mode "$mode_system"
 
-# Setting resolution
-exec_always --no-startup-id xrandr -s 1920x1080
-
-# Start nitrogen
-exec_always --no-startup-id nitrogen --restore 
-
-# Start compton
-exec_always --no-startup-id compton
-
-# Start polybar through launch script
-exec_always --no-startup-id ~/.config/polybar/launch.sh
